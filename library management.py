@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, font
+from tkinter import ttk
 
 class Book:
     def __init__(self, title, author, isbn):
@@ -26,7 +27,6 @@ class Library:
         self.populate_initial_books()
 
     def populate_initial_books(self):
-        # เพิ่มหนังสือตั้งต้น
         initial_books = [
             ("The Great Gatsby", "F. Scott", "0001"),
             ("To Kill a Mockingbird", "Harper", "0002"),
@@ -82,53 +82,64 @@ class LibraryApp:
         self.master = master
         self.library = Library()
         self.master.title("Library Management System")
+        self.master.configure(bg="#D3D3D3")  # สีพื้นหลังเทา
 
-        # Set font style
-        self.custom_font = font.Font(size=12)
+        self.custom_font = font.Font(family="Helvetica", size=12)
 
-        self.display = tk.Text(master, height=15, width=50, font=self.custom_font)
-        self.display.pack(pady=5)
+        # Frame สำหรับการแสดงผล
+        self.display_frame = tk.Frame(master, bg="#D3D3D3")
+        self.display_frame.pack(pady=10)
 
-        self.entry = tk.Entry(master, width=50, font=self.custom_font)
-        self.entry.pack(pady=5)
+        self.display = tk.Text(self.display_frame, height=15, width=50, font=self.custom_font, bg="white", fg="black")  # เปลี่ยนพื้นหลังเป็นขาว
+        self.display.pack(padx=10, pady=10)
 
-        self.add_book_button = tk.Button(master, text="Add Book", command=self.add_book, font=self.custom_font)
-        self.add_book_button.pack(pady=2)
+        # Frame สำหรับการกรอกข้อมูล
+        self.entry_frame = tk.Frame(master, bg="#D3D3D3")
+        self.entry_frame.pack(pady=10)
 
-        self.add_user_button = tk.Button(master, text="Add User", command=self.add_user, font=self.custom_font)
-        self.add_user_button.pack(pady=2)
+        self.entry = tk.Entry(self.entry_frame, width=50, font=self.custom_font)
+        self.entry.pack(padx=10, pady=5)
 
-        self.search_button = tk.Button(master, text="Search Books", command=self.search_books, font=self.custom_font)
-        self.search_button.pack(pady=2)
+        # Frame สำหรับปุ่ม
+        self.button_frame = tk.Frame(master, bg="#D3D3D3")
+        self.button_frame.pack(pady=10)
 
-        self.checkout_button = tk.Button(master, text="Checkout Book", command=self.checkout_book, font=self.custom_font)
-        self.checkout_button.pack(pady=2)
+        # สร้างปุ่มด้วย ttk.Button
+        self.create_button("Add Book", self.add_book)
+        self.create_button("Add User", self.add_user)
+        self.create_button("Search Books", self.search_books)
+        self.create_button("Checkout Book", self.checkout_book)
+        self.create_button("Return Book", self.return_book)
+        self.create_button("Display Checked Out", self.display_checked_out_books)
+        self.create_button("Display All Books", self.display_all_books)
 
-        self.return_button = tk.Button(master, text="Return Book", command=self.return_book, font=self.custom_font)
-        self.return_button.pack(pady=2)
+        self.update_display("Welcome to the Library Management System!")
 
-        self.display_checked_out_button = tk.Button(master, text="Display Checked Out", command=self.display_checked_out_books, font=self.custom_font)
-        self.display_checked_out_button.pack(pady=2)
-
-        self.display_all_books_button = tk.Button(master, text="Display All Books", command=self.display_all_books, font=self.custom_font)
-        self.display_all_books_button.pack(pady=2)
+    def create_button(self, text, command):
+        button = ttk.Button(self.button_frame, text=text, command=command)
+        button.pack(pady=5, padx=10, fill=tk.X)
+        style = ttk.Style()
+        style.configure("TButton", borderwidth=5, relief="flat", padding=10, background="white", foreground="black")
+        style.map("TButton", background=[("active", "white")])  # เปลี่ยนสีเมื่อกดปุ่ม
 
     def add_book(self):
         data = self.entry.get().split(',')
         if len(data) == 3:
             title, author, isbn = data
             message = self.library.add_book(title.strip(), author.strip(), isbn.strip())
-            self.update_display(message)
+            self.show_message("Success", message)
+            self.entry.delete(0, tk.END)
         else:
-            self.update_display("Please enter title, author, and ISBN separated by commas.")
+            self.show_message("Error", "Please enter title, author, and ISBN separated by commas.")
 
     def add_user(self):
         name = self.entry.get()
         if name:
             message = self.library.add_user(name.strip())
-            self.update_display(message)
+            self.show_message("Success", message)
+            self.entry.delete(0, tk.END)
         else:
-            self.update_display("Please enter a user name.")
+            self.show_message("Error", "Please enter a user name.")
 
     def search_books(self):
         query = self.entry.get()
@@ -145,11 +156,11 @@ class LibraryApp:
             user = self.library.users.get(user_name.strip())
             if user:
                 message = self.library.checkout_book(user, isbn.strip())
-                self.update_display(message)
+                self.show_message("Success", message)
             else:
-                self.update_display("User not found.")
+                self.show_message("Error", "User not found.")
         else:
-            self.update_display("Please enter user name and ISBN separated by commas.")
+            self.show_message("Error", "Please enter user name and ISBN separated by commas.")
 
     def return_book(self):
         data = self.entry.get().split(',')
@@ -158,11 +169,11 @@ class LibraryApp:
             user = self.library.users.get(user_name.strip())
             if user:
                 message = self.library.return_book(user, isbn.strip())
-                self.update_display(message)
+                self.show_message("Success", message)
             else:
-                self.update_display("User not found.")
+                self.show_message("Error", "User not found.")
         else:
-            self.update_display("Please enter user name and ISBN separated by commas.")
+            self.show_message("Error", "Please enter user name and ISBN separated by commas.")
 
     def display_checked_out_books(self):
         user_name = self.entry.get()
@@ -174,7 +185,7 @@ class LibraryApp:
             else:
                 self.update_display(f"{user} has no books checked out.")
         else:
-            self.update_display("User not found.")
+            self.show_message("Error", "User not found.")
 
     def display_all_books(self):
         if self.library.books:
@@ -182,6 +193,9 @@ class LibraryApp:
             self.update_display("รายการหนังสือทั้งหมด:\n" + books_info)
         else:
             self.update_display("ไม่มีหนังสือในห้องสมุด.")
+
+    def show_message(self, title, message):
+        messagebox.showinfo(title, message)
 
     def update_display(self, message):
         self.display.delete(1.0, tk.END)
